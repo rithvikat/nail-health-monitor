@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screening History - Nail Health Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/dashboard" class="nav-brand">
+      <span class="brand-icon">NH</span>
+      <span>Nail Health Monitor</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/screening">New Screening</a></li>
+      <li><a href="/history" class="active">History</a></li>
+      <li><a href="/reports">Reports</a></li>
+      <li><a href="/consultation">Consultation</a></li>
+    </ul>
+    <div class="nav-user">
+      <span class="user-tag">👤 {{ user.name }}</span>
+      <a href="/logout" class="btn-logout">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="container">
+    <div class="page-header">
+      <h1>Screening History & Timeline</h1>
+      <p>Visual tracking of your completed nail screenings over time</p>
+    </div>
+
+    {% if not screenings %}
+    <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">📷</div>
+      <h3>No Screenings Recorded Yet</h3>
+      <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem 0;">Perform your first nail screening to build your personal monitoring record.</p>
+      <a href="/screening" class="btn btn-primary">Start New Screening</a>
+    </div>
+    {% else %}
+
+    <!-- Longitudinal Monitoring Timeline -->
+    <div class="card">
+      <div class="card-title">Longitudinal Monitoring Timeline</div>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+        Review previous screening findings and note any changes observed between sessions.
+      </p>
+
+      <div class="timeline">
+        {% for item in timeline_items %}
+        <div class="timeline-item">
+          <div class="timeline-marker"></div>
+          <div class="timeline-date">{{ item.current.created_at.strftime('%B %d, %Y - %I:%M %p') }}</div>
+          <div class="timeline-content">
+            <img src="/{{ item.current.image_path }}" alt="Nail Photo" class="table-thumbnail" style="width: 70px; height: 70px;">
+            <div style="flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <h4 style="color: var(--primary-hover); font-size: 1.05rem;">
+                  {{ item.current.predicted_label }}
+                </h4>
+                <span class="badge badge-success">Confidence: {{ (item.current.confidence * 100) | round(1) }}%</span>
+              </div>
+
+              {% if item.previous %}
+                <div style="margin-top: 0.4rem; font-size: 0.85rem; color: #475569;">
+                  <strong>Previous screening finding:</strong> {{ item.previous.predicted_label }}
+                  <span style="color: var(--text-muted);">({{ item.previous.created_at.strftime('%b %d, %Y') }})</span>
+                </div>
+                <div style="margin-top: 0.2rem; font-size: 0.85rem; color: #0369a1;">
+                  <strong>Change in screening result:</strong>
+                  {% if item.current.predicted_class == item.previous.predicted_class %}
+                    Consistent finding observed.
+                  {% else %}
+                    Change observed between sessions.
+                  {% endif %}
+                </div>
+              {% else %}
+                <div style="margin-top: 0.4rem; font-size: 0.85rem; color: var(--text-muted);">
+                  <em>Initial baseline screening session</em>
+                </div>
+              {% endif %}
+
+              {% if item.recommendation %}
+                <div class="rec-snippet" style="margin-top: 0.5rem;">
+                  <strong>💡 Recommended Action:</strong> {{ item.recommendation.recommendations.recommended_action if item.recommendation.recommendations else item.recommendation.condition.summary }}
+                  <div style="font-size: 0.8rem; margin-top: 0.25rem; font-weight: 600;">
+                    👉 {{ item.recommendation.monitoring.change_detected }}
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+
+            {% if item.current.report %}
+              <a href="/{{ item.current.report.report_path }}" target="_blank" class="btn btn-sm btn-secondary" title="View PDF Report">
+                View Report
+              </a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Complete History Table -->
+    <div class="card">
+      <div class="card-title">All Completed Screenings</div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Date & Time</th>
+              <th>AI Screening Finding</th>
+              <th>Confidence</th>
+              <th>Recommendation</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in screenings %}
+            <tr>
+              <td>
+                <img src="/{{ s.image_path }}" alt="Nail image" class="table-thumbnail">
+              </td>
+              <td>
+                <strong>{{ s.created_at.strftime('%b %d, %Y') }}</strong><br>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">{{ s.created_at.strftime('%I:%M %p') }}</span>
+              </td>
+              <td>
+                <span style="font-weight: 600; color: #0f172a;">{{ s.predicted_label }}</span>
+              </td>
+              <td>
+                <span class="badge badge-success">{{ (s.confidence * 100) | round(1) }}%</span>
+              </td>
+              <td style="max-width: 260px;">
+                {% if s.recommendation %}
+                  <div style="margin-bottom: 0.25rem;">
+                    <span class="trend-badge trend-{{ s.recommendation.monitoring.trend_class }}">
+                      {{ s.recommendation.monitoring.trend }}
+                    </span>
+                  </div>
+                  <span style="font-size: 0.82rem; color: #334155; line-height: 1.35; display: block;">
+                    {{ s.recommendation.recommendations.recommended_action if s.recommendation.recommendations else s.recommendation.condition.summary }}
+                  </span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.5rem;">
+                  {% if s.report %}
+                    <a href="/{{ s.report.report_path }}" target="_blank" class="btn btn-sm btn-secondary">
+                      View Report
+                    </a>
+                  {% endif %}
+                  <a href="/consultation?screening_id={{ s.id }}" class="btn btn-sm btn-accent">
+                    Consult
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% endif %}
+
+    <!-- Medical Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <span class="disclaimer-icon">⚠️</span>
+      <div>
+        <strong>Notice:</strong> This AI result is for screening and monitoring purposes only and is not a medical diagnosis. Variations across time reflect AI model observations and should be clinically verified by a doctor.
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Nail Health Monitor &copy; 2026. Designed for AI screening and self-monitoring.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Nail Health Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="brand-icon" style="margin: 0 auto 0.75rem auto; width: 40px; height: 40px; font-size: 1.3rem;">NH</div>
+        <h2>Create Account</h2>
+        <p>Register for Nail Health Screening & Tracking</p>
+      </div>
+
+      {% if error %}
+      <div class="alert alert-danger">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form action="/register" method="post">
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name</label>
+          <input type="text" id="name" name="name" class="form-control" required placeholder="Your Full Name">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input type="email" id="email" name="email" class="form-control" required placeholder="name@example.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-control" required placeholder="••••••••">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="role">Register As</label>
+          <select id="role" name="role" class="form-control">
+            <option value="patient" selected>Patient (Screening &amp; Monitoring)</option>
+            <option value="doctor">Medical Doctor / Reviewing Dermatologist</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Register Account</button>
+      </form>
+
+      <div class="auth-footer">
+        Already registered? <a href="/login">Sign In</a>
+      </div>
+    </div>
+
+    <div class="disclaimer-banner" style="margin-top: 1.25rem;">
+      <span class="disclaimer-icon">ℹ️</span>
+      <div>
+        <strong>Notice:</strong> This application is for screening and health monitoring purposes. It does not replace advice from a healthcare professional.
+      </div>
+    </div>
+  </div>
+</body>
+</html>

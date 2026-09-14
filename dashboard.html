@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Nail Health Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/dashboard" class="nav-brand">
+      <span class="brand-icon">NH</span>
+      <span>Nail Health Monitor</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/dashboard" class="active">Dashboard</a></li>
+      <li><a href="/screening">New Screening</a></li>
+      <li><a href="/history">History</a></li>
+      <li><a href="/reports">Reports</a></li>
+      <li><a href="/consultation">Consultation</a></li>
+    </ul>
+    <div class="nav-user">
+      <span class="user-tag">👤 {{ user.name }}</span>
+      <a href="/logout" class="btn-logout">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="container">
+    <div class="page-header">
+      <h1>Welcome, {{ user.name }}</h1>
+      <p>AI-based nail health screening and longitudinal monitoring overview</p>
+    </div>
+
+    <!-- 4 Summary Stat Cards -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Screenings</div>
+        <div class="stat-value">{{ total_screenings }}</div>
+        <div class="stat-subtext">Verified sessions</div>
+      </div>
+
+      <div class="stat-card" style="border-top-color: #0284c7;">
+        <div class="stat-label">Latest Screening</div>
+        <div class="stat-value" style="font-size: 1.25rem; line-height: 1.3; margin-top: 0.5rem;">
+          {% if latest_screening %}
+            {{ latest_screening.predicted_label }}
+          {% else %}
+            No screenings yet
+          {% endif %}
+        </div>
+        <div class="stat-subtext">
+          {% if latest_screening %}
+            Confidence: {{ (latest_screening.confidence * 100) | round(1) }}%
+          {% else %}
+            Ready to screen
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="stat-card" style="border-top-color: #10b981;">
+        <div class="stat-label">Reports Generated</div>
+        <div class="stat-value">{{ total_reports }}</div>
+        <div class="stat-subtext">Downloadable summaries</div>
+      </div>
+
+      <div class="stat-card" style="border-top-color: #8b5cf6;">
+        <div class="stat-label">Consultations</div>
+        <div class="stat-value">{{ total_consultations }}</div>
+        <div class="stat-subtext">Doctor consultations</div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Card -->
+    <div class="card">
+      <div class="card-title">Quick Actions</div>
+      <div class="actions-row">
+        <a href="/screening" class="btn btn-primary">
+          <span>📷</span> New Screening
+        </a>
+        <a href="/history" class="btn btn-secondary">
+          <span>🕒</span> View History
+        </a>
+        <a href="/reports" class="btn btn-secondary">
+          <span>📄</span> Access Reports
+        </a>
+        <a href="/consultation" class="btn btn-accent">
+          <span>💬</span> Doctor Consultation
+        </a>
+      </div>
+    </div>
+
+    <!-- Latest Screening Summary Card -->
+    {% if latest_screening %}
+    <div class="card">
+      <div class="card-title">Most Recent Screening Result</div>
+      <div style="display: flex; gap: 1.5rem; align-items: flex-start; flex-wrap: wrap;">
+        <div>
+          <img src="/{{ latest_screening.image_path }}" alt="Latest Nail" class="table-thumbnail" style="width: 110px; height: 110px; border-radius: 8px;">
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <h3 style="color: var(--primary-hover); font-size: 1.25rem; margin-bottom: 0.25rem;">
+              {{ latest_screening.predicted_label }}
+            </h3>
+            {% if latest_recommendation and latest_recommendation.monitoring %}
+              <span class="trend-badge trend-{{ latest_recommendation.monitoring.trend_class }}">
+                Trend: {{ latest_recommendation.monitoring.trend }}
+              </span>
+            {% elif latest_recommendation and latest_recommendation.condition %}
+              <span class="priority-badge priority-{{ latest_recommendation.condition.priority_type }}">
+                {{ latest_recommendation.condition.priority_level }}
+              </span>
+            {% endif %}
+          </div>
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 0.75rem;">
+            Recorded on {{ latest_screening.created_at.strftime('%B %d, %Y at %I:%M %p') }} &bull; AI Prediction Confidence: <strong>{{ (latest_screening.confidence * 100) | round(1) }}%</strong>
+          </p>
+
+          {% if latest_recommendation %}
+          <div class="rec-snippet" style="margin-bottom: 1rem;">
+            <strong>💡 Recommended Action:</strong> {{ latest_recommendation.recommendations.recommended_action if latest_recommendation.recommendations else latest_recommendation.condition.summary }}
+          </div>
+          {% endif %}
+
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            {% if latest_report %}
+              <a href="/{{ latest_report.report_path }}" target="_blank" class="btn btn-sm btn-secondary">
+                <span>📄</span> View PDF Report
+              </a>
+            {% endif %}
+            <a href="/consultation?screening_id={{ latest_screening.id }}" class="btn btn-sm btn-accent">
+              <span>💬</span> Request Consultation
+            </a>
+            <a href="/history" class="btn btn-sm btn-secondary">
+              <span>🕒</span> View History
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Medical Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <span class="disclaimer-icon">⚠️</span>
+      <div>
+        <strong>Medical Screening Disclaimer:</strong> This AI result is for screening and monitoring purposes only and is not a medical diagnosis. Please consult a qualified dermatologist or physician for clinical diagnosis and treatment.
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Nail Health Monitor &copy; 2026. Designed for AI screening and self-monitoring.
+  </footer>
+</body>
+</html>

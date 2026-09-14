@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Consultation - Nail Health Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/dashboard" class="nav-brand">
+      <span class="brand-icon">NH</span>
+      <span>Nail Health Monitor</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/screening">New Screening</a></li>
+      <li><a href="/history">History</a></li>
+      <li><a href="/reports">Reports</a></li>
+      <li><a href="/consultation" class="active">Consultation</a></li>
+    </ul>
+    <div class="nav-user">
+      <span class="user-tag">👤 {{ user.name }}</span>
+      <a href="/logout" class="btn-logout">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="container">
+    <div class="page-header">
+      <h1>Doctor Consultation Request</h1>
+      <p>Submit your AI screening results for review and clinical guidance by a verified dermatologist</p>
+    </div>
+
+    <!-- Reviewing Physician Credentials Card -->
+    <div class="card" style="border-left: 5px solid #0d9488; background: #ffffff; padding: 1.5rem; margin-bottom: 1.75rem;">
+      <div style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+        <div style="width: 70px; height: 70px; border-radius: 50%; background: #ccfbf1; color: #0f766e; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+          🩺
+        </div>
+        <div style="flex: 1;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <h3 style="color: #0f172a; font-size: 1.3rem; margin-bottom: 0.2rem;">
+                Dr. Evelyn Vance, MD, FAAD
+              </h3>
+              <p style="color: #0d9488; font-weight: 600; font-size: 0.92rem; margin-bottom: 0.4rem;">
+                Board-Certified Dermatologist &bull; Nail Biology Specialist
+              </p>
+            </div>
+            <span class="badge badge-success" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;">
+              ✓ Verified Medical License
+            </span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem; margin-top: 0.5rem; font-size: 0.85rem; color: #475569; background: #f8fafc; padding: 0.85rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div>
+              <strong>License:</strong> #MED-482910-D (Active)
+            </div>
+            <div>
+              <strong>Education:</strong> MD, Stanford Medicine
+            </div>
+            <div>
+              <strong>Fellowship:</strong> Nail Disorders, Johns Hopkins
+            </div>
+            <div>
+              <strong>Memberships:</strong> AAD &amp; Council for Nail Disorders
+            </div>
+          </div>
+          <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.6rem;">
+            <em>Note: Clinical consultation reviews are conducted by certified medical practitioners and are kept strictly distinct from automated AI predictions.</em>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {% if success_msg %}
+    <div class="alert alert-success">
+      <div class="alert-title">✓ Consultation Requested</div>
+      <div>{{ success_msg }}</div>
+    </div>
+    {% endif %}
+
+    {% if error_msg %}
+    <div class="alert alert-danger">
+      {{ error_msg }}
+    </div>
+    {% endif %}
+
+    <!-- Request Form -->
+    <div class="card">
+      <div class="card-title">Request Professional Review</div>
+      
+      {% if not screenings %}
+      <div style="text-align: center; padding: 1.5rem;">
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">
+          You need at least one completed nail screening before requesting a doctor consultation.
+        </p>
+        <a href="/screening" class="btn btn-primary">Perform Screening First</a>
+      </div>
+      {% else %}
+
+      <form action="/consultation" method="post">
+        <div class="form-group">
+          <label class="form-label" for="screening_id">Select Completed Screening</label>
+          <select name="screening_id" id="screening_id" class="form-control" required>
+            {% for s in screenings %}
+              <option value="{{ s.id }}" {% if selected_id == s.id %}selected{% endif %}>
+                #{{ s.id }} - {{ s.predicted_label }} ({{ s.created_at.strftime('%b %d, %Y') }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="message">Your Questions or Symptoms for Dr. Evelyn Vance</label>
+          <textarea id="message" name="message" class="form-control" rows="4" required placeholder="Describe any pain, discoloration timeline, nail changes, or specific questions you'd like the doctor to review..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <span>📨</span> Submit Consultation Request to Dr. Vance
+        </button>
+      </form>
+      {% endif %}
+    </div>
+
+    <!-- Consultations History / Status -->
+    <div class="card">
+      <div class="card-title">My Consultation Requests</div>
+
+      {% if not consultations %}
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        No doctor consultation requests have been submitted yet.
+      </p>
+      {% else %}
+
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        {% for c in consultations %}
+        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; background: #fafafa;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <span style="font-weight: 700; font-size: 1rem; color: #0f172a;">Request #{{ c.id }}</span>
+              <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">
+                Submitted on {{ c.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+              </span>
+            </div>
+            <div>
+              {% if c.status == 'Pending' %}
+                <span class="badge badge-warning">Status: Pending Review by Dr. Evelyn Vance</span>
+              {% elif c.status == 'Reviewed' %}
+                <span class="badge badge-success">Status: Reviewed &bull; Dr. Evelyn Vance, MD, FAAD</span>
+              {% else %}
+                <span class="badge badge-info">Status: {{ c.status }}</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Associated Screening Detail -->
+          {% if c.screening %}
+          <div style="background: var(--primary-light); border: 1px solid var(--primary-border); border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+            <img src="/{{ c.screening.image_path }}" alt="Nail photo" class="table-thumbnail" style="width: 55px; height: 55px;">
+            <div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">
+                AI Screening Finding:
+              </div>
+              <div style="font-weight: 700; color: var(--primary-hover); font-size: 0.95rem;">
+                {{ c.screening.predicted_label }} ({{ (c.screening.confidence * 100) | round(1) }}% confidence)
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Patient Message -->
+          <div style="margin-bottom: 1rem;">
+            <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.2rem;">
+              Your Message to Doctor:
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-dark); background: #ffffff; padding: 0.65rem 0.85rem; border-radius: 6px; border: 1px solid var(--border);">
+              {{ c.message }}
+            </p>
+          </div>
+
+          <!-- Doctor's Opinion (Clearly separated from AI finding) -->
+          <div style="border-top: 1px solid var(--border); padding-top: 0.85rem;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: #0284c7; margin-bottom: 0.4rem; display: flex; align-items: center; justify-content: space-between;">
+              <span>👨‍⚕️ Reviewing Physician's Opinion:</span>
+              <span style="font-size: 0.78rem; font-weight: 600; color: #64748b;">Dr. Evelyn Vance, MD, FAAD (Lic. #MED-482910-D)</span>
+            </div>
+
+            {% if c.doctor_response %}
+              <div style="font-size: 0.92rem; color: #0f172a; background: #f0f9ff; padding: 0.85rem; border-radius: 6px; border: 1px solid #bae6fd;">
+                {{ c.doctor_response }}
+              </div>
+            {% else %}
+              <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+                Your case is currently in the physician review queue. Dr. Vance reviews cases within 24–48 hours.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Medical Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <span class="disclaimer-icon">⚠️</span>
+      <div>
+        <strong>Notice:</strong> This AI result is for screening and monitoring purposes only and is not a medical diagnosis. The AI model finding is strictly separate from a licensed doctor's clinical evaluation.
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Nail Health Monitor &copy; 2026. Designed for AI screening and self-monitoring.
+  </footer>
+</body>
+</html>

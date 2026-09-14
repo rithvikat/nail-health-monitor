@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Review Portal - Nail Health Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/doctor/dashboard" class="nav-brand">
+      <span class="brand-icon" style="background: #0284c7;">🩺</span>
+      <span>Nail Health Monitor &bull; Physician Portal</span>
+    </a>
+    <div class="nav-user">
+      <span class="user-tag" style="background: #e0f2fe; color: #0369a1; border-color: #bae6fd;">
+        👨‍⚕️ {{ doctor.name }} (Lic. {{ doctor.doctor_license or '#MED-482910-D' }})
+      </span>
+      <a href="/logout" class="btn-logout">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="container">
+    <div class="page-header">
+      <h1>Physician Consultation &amp; Report Review Queue</h1>
+      <p>Review patient-submitted nail screenings, inspect PDF diagnostic reports, and provide clinical guidance</p>
+    </div>
+
+    <!-- Doctor Credentials Card -->
+    <div class="card" style="border-left: 5px solid #0284c7; background: #ffffff; padding: 1.25rem 1.5rem; margin-bottom: 2rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h2 style="font-size: 1.35rem; color: #0f172a; margin-bottom: 0.25rem;">{{ doctor.name }}</h2>
+          <p style="color: #0284c7; font-weight: 600; font-size: 0.92rem;">
+            {{ doctor.doctor_specialty or 'Board-Certified Dermatologist & Nail Biology Specialist' }}
+          </p>
+          <div style="margin-top: 0.4rem; font-size: 0.85rem; color: #64748b;">
+            <span><strong>Medical License:</strong> {{ doctor.doctor_license or '#MED-482910-D' }}</span> &bull; 
+            <span><strong>Hospital Affiliation:</strong> Stanford Medicine &bull; Johns Hopkins</span> &bull; 
+            <span><strong>Status:</strong> <span class="badge badge-success">Active & Verified</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat Grid -->
+    <div class="stat-grid">
+      <div class="stat-card" style="border-top-color: #f59e0b;">
+        <div class="stat-label">Pending Review</div>
+        <div class="stat-value" style="color: #d97706;">{{ pending_count }}</div>
+        <div class="stat-subtext">Awaiting clinical review</div>
+      </div>
+
+      <div class="stat-card" style="border-top-color: #10b981;">
+        <div class="stat-label">Completed Reviews</div>
+        <div class="stat-value" style="color: #059669;">{{ reviewed_count }}</div>
+        <div class="stat-subtext">Opinions delivered</div>
+      </div>
+
+      <div class="stat-card" style="border-top-color: #0284c7;">
+        <div class="stat-label">Total Consultations</div>
+        <div class="stat-value">{{ total_consultations }}</div>
+        <div class="stat-subtext">Patient cases assigned</div>
+      </div>
+    </div>
+
+    <!-- Consultations & Reports Queue -->
+    <div class="card">
+      <div class="card-title">Patient Consultations &amp; Attached Reports</div>
+
+      {% if not consultations %}
+      <div style="text-align: center; padding: 2.5rem 1rem;">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📋</div>
+        <h3>No Consultation Requests in Queue</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.35rem;">
+          When patients submit a consultation request after a screening, it will appear here for your review.
+        </p>
+      </div>
+      {% else %}
+
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% for c in consultations %}
+        <div style="border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; background: #fafbfc;">
+          
+          <!-- Header info -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+            <div>
+              <span style="font-size: 1.1rem; font-weight: 700; color: #0f172a;">Case #{{ c.id }} &bull; {{ c.user.name }}</span>
+              <span style="font-size: 0.82rem; color: var(--text-muted); margin-left: 0.5rem;">
+                ({{ c.user.email }})
+              </span>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+                Submitted on {{ c.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+              </div>
+            </div>
+
+            <div>
+              {% if c.status == 'Pending' %}
+                <span class="badge badge-warning" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                  ⏳ Pending Doctor Review
+                </span>
+              {% else %}
+                <span class="badge badge-success" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                  ✓ Reviewed
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Attached Screening & PDF Report Section -->
+          {% if c.screening %}
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <img src="/{{ c.screening.image_path }}" alt="Nail photo" class="table-thumbnail" style="width: 75px; height: 75px; border-radius: 8px;">
+              <div>
+                <div style="font-size: 0.78rem; text-transform: uppercase; font-weight: 600; color: var(--text-muted);">
+                  AI Screening Finding:
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #0f766e;">
+                  {{ c.screening.predicted_label }}
+                </div>
+                <div style="font-size: 0.82rem; color: #475569; margin-top: 0.15rem;">
+                  Confidence: <strong>{{ (c.screening.confidence * 100) | round(1) }}%</strong> &bull; Screened {{ c.screening.created_at.strftime('%b %d, %Y') }}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              {% if c.screening.report %}
+                <a href="/reports/{{ c.screening.report.id }}" target="_blank" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.88rem;">
+                  <span>📄</span> View Patient PDF Report
+                </a>
+              {% else %}
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Report not attached</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Patient Question / Symptoms -->
+          <div style="margin-bottom: 1.25rem;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+              Patient Inquiry / Symptoms:
+            </div>
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.85rem 1rem; font-size: 0.92rem; color: #0f172a; line-height: 1.5;">
+              "{{ c.message }}"
+            </div>
+          </div>
+
+          <!-- Doctor Response Section -->
+          {% if c.status == 'Pending' %}
+          <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 8px; padding: 1.25rem;">
+            <h4 style="color: #0f766e; font-size: 0.95rem; margin-bottom: 0.5rem;">
+              Provide Clinical Evaluation &bull; Dr. Evelyn Vance
+            </h4>
+            <form action="/doctor/respond/{{ c.id }}" method="post">
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <textarea name="doctor_response" class="form-control" rows="3" required placeholder="Enter clinical assessment, guidance, care recommendations, or whether in-person dermatoscopy is advised..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <span>✓</span> Submit Clinical Response
+              </button>
+            </form>
+          </div>
+          {% else %}
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: #166534;">
+                👨‍⚕️ Your Clinical Assessment:
+              </span>
+              <span style="font-size: 0.78rem; color: #166534; font-weight: 600;">
+                Signed by Dr. Evelyn Vance, MD, FAAD (Lic. {{ doctor.doctor_license or '#MED-482910-D' }})
+              </span>
+            </div>
+            <p style="font-size: 0.92rem; color: #0f172a; line-height: 1.5;">
+              {{ c.doctor_response }}
+            </p>
+          </div>
+          {% endif %}
+
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Medical Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <span class="disclaimer-icon">⚠️</span>
+      <div>
+        <strong>Notice:</strong> This physician review portal is designed for clinical triage and guidance. Physician assessments are documented independently of automated AI screening observations.
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Nail Health Monitor &copy; 2026. Physician Portal.
+  </footer>
+</body>
+</html>

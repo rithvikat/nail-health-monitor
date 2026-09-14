@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports - Nail Health Monitor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/dashboard" class="nav-brand">
+      <span class="brand-icon">NH</span>
+      <span>Nail Health Monitor</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/screening">New Screening</a></li>
+      <li><a href="/history">History</a></li>
+      <li><a href="/reports" class="active">Reports</a></li>
+      <li><a href="/consultation">Consultation</a></li>
+    </ul>
+    <div class="nav-user">
+      <span class="user-tag">👤 {{ user.name }}</span>
+      <a href="/logout" class="btn-logout">Logout</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="container">
+    <div class="page-header">
+      <h1>Screening Reports</h1>
+      <p>Download and review generated PDF screening summaries</p>
+    </div>
+
+    {% if not reports %}
+    <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+      <h3>No Reports Generated Yet</h3>
+      <p style="color: var(--text-muted); margin: 0.5rem 0 1.5rem 0;">Reports are generated automatically whenever a nail image passes quality screening.</p>
+      <a href="/screening" class="btn btn-primary">Start New Screening</a>
+    </div>
+    {% else %}
+
+    <div class="card">
+      <div class="card-title">Generated PDF Reports</div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Report ID</th>
+              <th>Date Created</th>
+              <th>Sample Image</th>
+              <th>AI Screening Finding</th>
+              <th>AI Prediction Confidence</th>
+              <th>Recommendation</th>
+              <th>PDF Document</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reports %}
+            <tr>
+              <td>
+                <strong>#REP-{{ r.id }}</strong>
+              </td>
+              <td>
+                {{ r.created_at.strftime('%B %d, %Y') }}<br>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">{{ r.created_at.strftime('%I:%M %p') }}</span>
+              </td>
+              <td>
+                {% if r.screening %}
+                  <img src="/{{ r.screening.image_path }}" alt="Nail Photo" class="table-thumbnail">
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                {% if r.screening %}
+                  <span style="font-weight: 600;">{{ r.screening.predicted_label }}</span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                {% if r.screening %}
+                  <span class="badge badge-success">{{ (r.screening.confidence * 100) | round(1) }}%</span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td style="max-width: 240px;">
+                {% if r.screening and r.screening.recommendation %}
+                  <div style="margin-bottom: 0.25rem;">
+                    <span class="trend-badge trend-{{ r.screening.recommendation.monitoring.trend_class }}">
+                      {{ r.screening.recommendation.monitoring.trend }}
+                    </span>
+                  </div>
+                  <span style="font-size: 0.82rem; color: #334155; line-height: 1.35; display: block;">
+                    {{ r.screening.recommendation.recommendations.recommended_action if r.screening.recommendation.recommendations else r.screening.recommendation.condition.summary }}
+                  </span>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                <a href="/{{ r.report_path }}" target="_blank" class="btn btn-sm btn-primary">
+                  <span>📥</span> View / Download PDF
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Medical Disclaimer Banner -->
+    <div class="disclaimer-banner">
+      <span class="disclaimer-icon">⚠️</span>
+      <div>
+        <strong>Notice:</strong> This AI result is for screening and monitoring purposes only and is not a medical diagnosis. Reports should be shared with a licensed physician for professional medical interpretation.
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Nail Health Monitor &copy; 2026. Designed for AI screening and self-monitoring.
+  </footer>
+</body>
+</html>
