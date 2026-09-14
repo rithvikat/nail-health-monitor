@@ -151,28 +151,39 @@ def detect_and_crop_nails(image_path_or_array) -> dict:
     # 5. Analyze fingertips across significant hand contours
     raw_tips = []
     min_dim = min(width, height)
-    for c in hand_contours:
-        hull = cv2.convexHull(c, returnPoints=False)
-        if hull is not None and len(hull) > 3:
-            defects = cv2.convexityDefects(c, hull)
-            if defects is not None:
-                for i in range(defects.shape[0]):
-                    s, e, f, d = defects[i, 0]
-                    depth_px = d / 256.0
-                    # A true valley between fingers in a hand has significant depth (> 18% of min dimension)
-                    if depth_px > 0.18 * min_dim:
-                        start = tuple(c[s][0])
-                        end = tuple(c[e][0])
-                        far = tuple(c[f][0])
-                        # Angle check: finger valleys are acute/V-shaped (< 105 degrees)
-                        v1 = np.array(start) - np.array(far)
-                        v2 = np.array(end) - np.array(far)
-                        cos_angle = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2) + 1e-6)
-                        angle_deg = np.degrees(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
-                        if angle_deg < 105:
-                            raw_tips.append(start)
-                            raw_tips.append(end)
+   for c in hand_contours:
+    hull = cv2.convexHull(c, returnPoints=False)
 
+    if hull is not None and len(hull) > 3:
+        defects = cv2.convexityDefects(c, hull)
+
+        if defects is not None:
+            for i in range(defects.shape[0]):
+
+                if defects.ndim == 3:
+                    s, e, f, d = defects[i][0]
+                else:
+                    s, e, f, d = defects[i]
+
+                start = tuple(c[s][0])
+                end = tuple(c[e][0])
+                far = tuple(c[f][0])
+
+                # Angle check: finger valleys are acute/V-shaped
+                v1 = np.array(start) - np.array(far)
+                v2 = np.array(end) - np.array(far)
+
+                cos_angle = np.dot(v1, v2) / (
+                    np.linalg.norm(v1) * np.linalg.norm(v2) + 1e-6
+                )
+
+                angle_deg = np.degrees(
+                    np.arccos(np.clip(cos_angle, -1.0, 1.0))
+                )
+
+                if angle_deg < 105:
+                    raw_tips.append(start)
+                    raw_tips.append(end)
     # Cluster/deduplicate fingertips close to each other
     unique_tips = []
     min_dist = max(width, height) * 0.055
